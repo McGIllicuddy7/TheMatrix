@@ -1,11 +1,15 @@
 #include "feyutils.h"
 #include <stdio.h>
+#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include "matrix.h"
+bool nearly_eq(double a, double b){
+	return fabs(a-b)<=.01;
+}
 //syntax r1(operator)(some value)->r2
 typedef enum{
-	error_type,matrix,add,subtract, multiply, divide, value, insert, swap, rwe
+	error_type,matrix,add,subtract, multiply, divide, value, insert, swap
 }operator;
 typedef struct{
 	operator op;
@@ -56,6 +60,15 @@ void lexum_array_print(lexumArray_t v){
 	}
 	printf("\n");
 }
+void mat_cleanup(matrix_t * mat){
+	for(int i =0 ; i<mat->num_collumns; i++){
+		for(int j =0 ; j<mat->num_rows; j++){
+			if(nearly_eq(mat->data[i].data[j], -0)){
+				mat->data[i].data[j] = 0;
+			}
+		}
+	}
+}
 lexumArray_t parse_input(fey_arena_t * arena, char * buffer){
 	fey_arena_init();
 	fstrArray_t v = parse_fstr(local,buffer, "r -> * + - /");
@@ -95,9 +108,6 @@ lexumArray_t parse_input(fey_arena_t * arena, char * buffer){
 		if(str_eq(s.data, "-")){
 			lexumArray_Push(arena, &out,(lexum){subtract,0});
 		}
-		if(str_eq(s.data, "rwe")){
-			lexumArray_Push(arena, &out,(lexum){rwe, 0});
-		}
 	}
 	return out;
 }
@@ -106,18 +116,28 @@ typedef enum{
 } form_t;
 form_t analyze_matrix(matrix_t mat){
 	int last_index = -1;
-	bool reduced = false;
+	bool reduced = true;
 	for(int i = 0; i<mat.num_collumns; i++){
 		int j = 0;
-		while(mat.data[i].data[j] == 0){
+		while(mat.data[i].data[j] == 0 && j<mat.num_rows){
 			j++;
 		}
+		double f = mat.data[i].data[j];
 		if(last_index>j){
 			return not;
 		}
 		else{
 			if(mat.data[i].data[j] != 1){
 				reduced = false;
+			}
+			else{
+				j = j+1;
+				while (j<mat.num_rows){
+					if(mat.data[i].data[j] != 0){
+						reduced = false;
+					}
+					j++;
+				}
 			}
 			last_index = j;
 		}
@@ -275,18 +295,17 @@ restart_entry:
 					mat.data[v].data[j] = r1.data[j];
 				}
 			}
-			else if(lex.arr[i].op == rwe){
-				form_t frm = analyze_matrix(mat);
-				if(frm == not){
-					printf("\n not in row echelon form\n");
-				}
-				else if(frm == row_echelon_form){
-					printf("\n in row echelon form\n");
-				}
-				else if(frm == reduced_row_echelon_form){
-					printf("\n in reduced row echelon form\n");
-				}
-			}
+		}
+		mat_cleanup(&mat);
+		form_t frm = analyze_matrix(mat);
+		if(frm == not){
+			printf("\n not in row echelon form\n");
+		}
+		else if(frm == row_echelon_form){
+			printf("\n in row echelon form\n");
+		}
+		else if(frm == reduced_row_echelon_form){
+			printf("\n in reduced row echelon form\n");
 		}
 		matrix_print(mat);
 	}
