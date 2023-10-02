@@ -5,7 +5,7 @@
 #include "matrix.h"
 //syntax r1(operator)(some value)->r2
 typedef enum{
-	error_type,matrix,add,subtract, multiply, divide, value, insert, swap
+	error_type,matrix,add,subtract, multiply, divide, value, insert, swap, rwe
 }operator;
 typedef struct{
 	operator op;
@@ -95,8 +95,37 @@ lexumArray_t parse_input(fey_arena_t * arena, char * buffer){
 		if(str_eq(s.data, "-")){
 			lexumArray_Push(arena, &out,(lexum){subtract,0});
 		}
+		if(str_eq(s.data, "rwe")){
+			lexumArray_Push(arena, &out,(lexum){rwe, 0});
+		}
 	}
 	return out;
+}
+typedef enum{
+	not, row_echelon_form, reduced_row_echelon_form
+} form_t;
+form_t analyze_matrix(matrix_t mat){
+	int last_index = -1;
+	bool reduced = false;
+	for(int i = 0; i<mat.num_collumns; i++){
+		int j = 0;
+		while(mat.data[i].data[j] == 0){
+			j++;
+		}
+		if(last_index>j){
+			return not;
+		}
+		else{
+			if(mat.data[i].data[j] != 1){
+				reduced = false;
+			}
+			last_index = j;
+		}
+	}
+	if(reduced){
+		return reduced_row_echelon_form;
+	}
+	return row_echelon_form;
 }
 void repl(void){
 	fey_arena_init();
@@ -244,6 +273,18 @@ restart_entry:
 				long v = lex.arr[i+1].value;
 				for(int j =0 ; j<mat.num_rows; j++){
 					mat.data[v].data[j] = r1.data[j];
+				}
+			}
+			else if(lex.arr[i].op == rwe){
+				form_t frm = analyze_matrix(mat);
+				if(frm == not){
+					printf("\n not in row echelon form\n");
+				}
+				else if(frm == row_echelon_form){
+					printf("\n in row echelon form\n");
+				}
+				else if(frm == reduced_row_echelon_form){
+					printf("\n in reduced row echelon form\n");
 				}
 			}
 		}
