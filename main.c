@@ -111,42 +111,6 @@ lexumArray_t parse_input(fey_arena_t * arena, char * buffer){
 	}
 	return out;
 }
-typedef enum{
-	not, row_echelon_form, reduced_row_echelon_form
-} form_t;
-form_t analyze_matrix(matrix_t mat){
-	int last_index = -1;
-	bool reduced = true;
-	for(int i = 0; i<mat.num_collumns; i++){
-		int j = 0;
-		while(mat.data[i].data[j] == 0 && j<mat.num_rows){
-			j++;
-		}
-		double f = mat.data[i].data[j];
-		if(last_index>j){
-			return not;
-		}
-		else{
-			if(mat.data[i].data[j] != 1){
-				reduced = false;
-			}
-			else{
-				j = j+1;
-				while (j<mat.num_rows){
-					if(mat.data[i].data[j] != 0){
-						reduced = false;
-					}
-					j++;
-				}
-			}
-			last_index = j;
-		}
-	}
-	if(reduced){
-		return reduced_row_echelon_form;
-	}
-	return row_echelon_form;
-}
 void repl(void){
 	fey_arena_init();
 	printf("enter height: ");

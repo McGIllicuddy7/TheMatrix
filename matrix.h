@@ -19,3 +19,7 @@ matrix_row_t matrix_row_div(matrix_row_t v1, double v2, fey_arena_t * arena);
 void matrix_print(matrix_t matrix);
 void matrix_insert(matrix_t* matrix, matrix_row_t row, size_t index);
 
+typedef enum{
+	not, row_echelon_form, reduced_row_echelon_form
+} form_t;
+form_t analyze_matrix(matrix_t mat);
